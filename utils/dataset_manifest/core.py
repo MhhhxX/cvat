@@ -9,6 +9,7 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator
 from contextlib import closing
+from dataclasses import dataclass
 from enum import Enum
 from inspect import isgenerator
 from io import StringIO
@@ -18,11 +19,24 @@ from typing import Any, Callable, Optional, Union
 
 import av
 from PIL import Image
+from av.container import Chapter
 
 from .errors import InvalidImageError, InvalidManifestError, InvalidPcdError, InvalidVideoError
 from .types import NamedBytesIO
 from .utils import PcdReader, SortingMethod, md5_hash, rotate_image, sort
 
+
+@dataclass
+class KeyFrame:
+    frame_num: int
+    pts: int
+    checksum: str
+
+@dataclass
+class CombinedReturn:
+    frame_number: int
+    keyframe: Optional[KeyFrame]
+    chapter: Optional[Chapter]
 
 class VideoStreamReader:
     def __init__(self, source_path, chunk_size, force):
@@ -59,6 +73,17 @@ class VideoStreamReader:
         video_stream.thread_type = "AUTO"
         return video_stream
 
+    @staticmethod
+    def _get_chapters(container):
+        chapters = container.chapters()
+        stream = VideoStreamReader._get_video_stream(container)
+        stream_tb = stream.time_base
+        rescale_q = lambda q, src, dest: int(q * src / dest + 0.5)
+        for chapter in chapters:
+            chapter["start"] = rescale_q(chapter.start, chapter.time_base, stream_tb)
+            chapter["end"] = rescale_q(chapter.end, chapter.time_base, stream_tb)
+        return chapters
+
     def __len__(self):
         assert (
             self._frames_number is not None
@@ -77,7 +102,13 @@ class VideoStreamReader:
                     return False
                 return True
 
-    def __iter__(self) -> Iterator[Union[int, tuple[int, int, str]]]:
+    def _find_current_chapter(self, chapters, frame_pts):
+        for i, chapter in enumerate(chapters):
+            if chapter.start <= frame_pts <= chapter.end:
+                return i
+        return None
+
+    def __iter__(self) -> Iterator[Union[int, CombinedReturn]]:
         """
         Iterate over video frames and yield key frames or indexes.
 
@@ -91,6 +122,9 @@ class VideoStreamReader:
         ):
             reading_v_stream = self._get_video_stream(reading_container)
             checking_v_stream = self._get_video_stream(checking_container)
+            chapters = reading_container.chapters()
+            current_chapter = None
+            complete_chapter = None
             prev_pts: Optional[int] = None
             prev_dts: Optional[int] = None
             index, key_frame_count = 0, 0
@@ -102,6 +136,23 @@ class VideoStreamReader:
                         raise InvalidVideoError("Detected non-increasing PTS sequence in the video")
                     if None not in {frame.dts, prev_dts} and frame.dts <= prev_dts:
                         raise InvalidVideoError("Detected non-increasing DTS sequence in the video")
+
+                    if chapters:
+                        if current_chapter is None:
+                            start_pts = prev_pts if complete_chapter is not None and complete_chapter["end_frame"] == index - 2 else frame.pts
+                            current_chapter = chapters.pop(self._find_current_chapter(chapters, start_pts))
+                            if current_chapter:
+                                current_chapter["start"] = index
+                            complete_chapter = None
+                        elif current_chapter["end"] > frame.pts:
+                            current_chapter["end"] = index - 1
+                            complete_chapter = current_chapter
+                            current_chapter = None
+                        elif current_chapter["end"] == frame.pts:
+                            current_chapter["end"] = index
+                            complete_chapter = current_chapter
+                            current_chapter = None
+
                     prev_pts, prev_dts = frame.pts, frame.dts
 
                     if frame.key_frame:
@@ -123,11 +174,11 @@ class VideoStreamReader:
 
                         if is_valid_key_frame:
                             key_frame_count += 1
-                            yield (index, key_frame_data["pts"], key_frame_data["md5"])
+                            yield CombinedReturn(index, KeyFrame(index, key_frame_data["pts"], key_frame_data["md5"]), complete_chapter)
                         else:
-                            yield index
+                            yield CombinedReturn(index, None, complete_chapter)
                     else:
-                        yield index
+                        yield CombinedReturn(index, None, complete_chapter)
 
                     index += 1
                     key_frame_ratio = index // (key_frame_count or 1)
@@ -532,6 +583,7 @@ class VideoManifestManager(_ManifestManager):
         super().__init__(manifest_path, create_index)
         setattr(self._manifest, "TYPE", "video")
         self.BASE_INFORMATION["properties"] = 3
+        self.chapters = []
 
     def link(self, media_file, upload_dir=None, chunk_size=36, force=False, **kwargs):
         self._reader = VideoStreamReader(
@@ -546,6 +598,7 @@ class VideoManifestManager(_ManifestManager):
                 "name": os.path.basename(self._reader.source_path),
                 "resolution": self._reader.resolution,
                 "length": len(self._reader),
+                "chapters": self.chapters
             },
         }
         for key, value in base_info.items():
@@ -559,11 +612,14 @@ class VideoManifestManager(_ManifestManager):
             else _tqdm(self._reader, desc="Manifest creating", total=float("inf"))
         )
         for item in iterable_obj:
-            if isinstance(item, tuple):
+            if item.keyframe is not None:
+                keyframe = item.keyframe
                 json_item = json.dumps(
-                    {"number": item[0], "pts": item[1], "checksum": item[2]}, separators=(",", ":")
+                    {"number": keyframe.frame_num, "pts": keyframe.pts, "checksum": keyframe.checksum}, separators=(",", ":")
                 )
                 file.write(f"{json_item}\n")
+            elif item.chapter is not None:
+                self.chapters.append(item.chapter)
 
     def create(self, *, _tqdm=None):  # pylint: disable=arguments-differ
         """Creating and saving a manifest file"""
