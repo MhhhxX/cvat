@@ -391,6 +391,10 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
         }
     };
 
+    private openChapterMenu = async (): Promise<void> => {
+
+    }
+
     private onFirstFrame = async (): Promise<void> => {
         const {
             frameNumber, jobInstance, playing,

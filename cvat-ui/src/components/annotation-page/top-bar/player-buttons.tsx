@@ -11,7 +11,7 @@ import CVATTooltip from 'components/common/cvat-tooltip';
 import GlobalHotKeys, { KeyMap } from 'utils/mousetrap-react';
 import { NavigationType, Workspace } from 'reducers';
 import {
-    BackJumpIcon,
+    BackJumpIcon, ChapterMenuIcon,
     FirstIcon,
     ForwardJumpIcon,
     LastIcon,
@@ -29,6 +29,7 @@ import {
 import { ShortcutScope } from 'utils/enums';
 import { registerComponentShortcuts } from 'actions/shortcuts-actions';
 import { subKeyMap } from 'utils/component-subkeymap';
+import { Chapter } from 'cvat-core/src/frames';
 
 interface Props {
     playing: boolean;
@@ -37,6 +38,7 @@ interface Props {
     previousFrameShortcut: string;
     forwardShortcut: string;
     backwardShortcut: string;
+    chapters: Chapter[];
     keyMap: KeyMap;
     workspace: Workspace;
     navigationType: NavigationType;
@@ -45,6 +47,7 @@ interface Props {
     onNextFrame(): void;
     onForward(): void;
     onBackward(): void;
+    openChapterMenu(): void;
     onFirstFrame(): void;
     onLastFrame(): void;
     onSearchAnnotations(direction: 'forward' | 'backward'): void;
@@ -120,6 +123,7 @@ function PlayerButtons(props: Props): JSX.Element {
         forwardShortcut,
         backwardShortcut,
         keyMap,
+        chapters,
         navigationType,
         workspace,
         onSwitchPlay,
@@ -127,6 +131,7 @@ function PlayerButtons(props: Props): JSX.Element {
         onNextFrame,
         onForward,
         onBackward,
+        openChapterMenu,
         onFirstFrame,
         onLastFrame,
         setNavigationType,
@@ -232,6 +237,16 @@ function PlayerButtons(props: Props): JSX.Element {
     return (
         <Col className='cvat-player-buttons'>
             <GlobalHotKeys keyMap={subKeyMap(componentShortcuts, keyMap)} handlers={handlers} />
+            { (chapters.length > 0) && (
+                <CVATTooltip title='Chapters'>
+                    <Icon
+                        style={navIconStyle}
+                        className='cvat-player-chapter-menu-button'
+                        component={ChapterMenuIcon}
+                        onClick={openChapterMenu}
+                    />
+                </CVATTooltip>
+            )}
             <CVATTooltip title='Go to the first frame'>
                 <Icon
                     style={navIconStyle}
