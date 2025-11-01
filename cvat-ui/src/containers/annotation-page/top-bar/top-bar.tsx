@@ -94,6 +94,7 @@ interface DispatchToProps {
         frameFrom: number,
         frameTo: number,
     ): void;
+    selectChapter(id: number): void;
     setForceExitAnnotationFlag(forceExit: boolean): void;
     changeWorkspace(workspace: Workspace): void;
     onSwitchToolsBlockerState(toolsBlockerState: ToolsBlockerState): void;
@@ -391,10 +392,6 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
         }
     };
 
-    private openChapterMenu = async (): Promise<void> => {
-
-    }
-
     private onFirstFrame = async (): Promise<void> => {
         const {
             frameNumber, jobInstance, playing,
@@ -558,9 +555,9 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
         }
     };
 
-    private readonly selectChapter = (id: number): void => {
+    private readonly selectChapter = async (id: number): Promise<void> => {
         const {
-            frameNumber, chapters
+            chapters, playing, onSwitchPlay,
         } = this.props;
         let selectedChapter: Chapter | null = null;
         for (const chapter of chapters) {
@@ -569,9 +566,12 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
             }
         }
         if (selectedChapter !== null) {
-            changeFrameAsync(selectedChapter.start)
+            if (playing) {
+                onSwitchPlay(false);
+            }
+            this.changeFrame(selectedChapter.start);
         }
-    }
+    };
 
     private onChangePlayerSliderValue = async (value: number): Promise<void> => {
         const {
@@ -725,7 +725,7 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
                 onLastFrame={this.onLastFrame}
                 onSearchAnnotations={this.searchAnnotations}
                 onSearchChapters={this.searchChapters}
-                onSelectChapter={this.onSelectChapter}
+                onSelectChapter={this.selectChapter}
                 setNavigationType={setNavigationType}
                 onSliderChange={this.onChangePlayerSliderValue}
                 onInputChange={this.onChangePlayerInputValue}
