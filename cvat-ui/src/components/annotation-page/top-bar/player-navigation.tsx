@@ -162,11 +162,11 @@ function PlayerNavigation(props: Props): JSX.Element {
         opacity: 0.5,
     } : {};
 
-    const formatChapterMarks = (labelname: string, fontSize: string) => {
+    const formatChapterMarks = (labelname: string, fontSize: string): { style: React.CSSProperties; label: React.ReactNode } => {
         if (labelname) {
             return {
                 style:
-                        { color: '#ff4136', fontSize: 'x-small' },
+                        { color: '#ff4136', fontSize },
                 label:
                         <Tooltip title={`${labelname}`}>
                             <span>

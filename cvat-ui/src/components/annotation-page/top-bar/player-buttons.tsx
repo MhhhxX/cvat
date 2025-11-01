@@ -30,7 +30,6 @@ import { ShortcutScope } from 'utils/enums';
 import { registerComponentShortcuts } from 'actions/shortcuts-actions';
 import { subKeyMap } from 'utils/component-subkeymap';
 import { Chapter } from 'cvat-core/src/frames';
-import chapterMenu from './chapter-menu';
 import ChapterMenu from './chapter-menu';
 
 interface Props {
