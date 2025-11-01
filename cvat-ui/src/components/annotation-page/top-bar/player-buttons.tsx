@@ -30,6 +30,8 @@ import { ShortcutScope } from 'utils/enums';
 import { registerComponentShortcuts } from 'actions/shortcuts-actions';
 import { subKeyMap } from 'utils/component-subkeymap';
 import { Chapter } from 'cvat-core/src/frames';
+import chapterMenu from './chapter-menu';
+import ChapterMenu from './chapter-menu';
 
 interface Props {
     playing: boolean;
@@ -39,6 +41,7 @@ interface Props {
     forwardShortcut: string;
     backwardShortcut: string;
     chapters: Chapter[];
+    activeChapter: number | null;
     keyMap: KeyMap;
     workspace: Workspace;
     navigationType: NavigationType;
@@ -47,11 +50,12 @@ interface Props {
     onNextFrame(): void;
     onForward(): void;
     onBackward(): void;
-    openChapterMenu(): void;
     onFirstFrame(): void;
     onLastFrame(): void;
     onSearchAnnotations(direction: 'forward' | 'backward'): void;
     onSearchChapters(direction: 'forward' | 'backward'): void;
+    onHoveredChapter(id: number | null): void;
+    onSelectChapter(id: number): void;
     setNavigationType(navigationType: NavigationType): void;
 }
 
@@ -124,6 +128,7 @@ function PlayerButtons(props: Props): JSX.Element {
         backwardShortcut,
         keyMap,
         chapters,
+        activeChapter,
         navigationType,
         workspace,
         onSwitchPlay,
@@ -131,12 +136,13 @@ function PlayerButtons(props: Props): JSX.Element {
         onNextFrame,
         onForward,
         onBackward,
-        openChapterMenu,
         onFirstFrame,
         onLastFrame,
         setNavigationType,
         onSearchAnnotations,
         onSearchChapters,
+        onHoveredChapter,
+        onSelectChapter,
     } = props;
 
     const handlers: Partial<Record<keyof typeof componentShortcuts, ((event?: KeyboardEvent) => void)>> = {
@@ -238,14 +244,13 @@ function PlayerButtons(props: Props): JSX.Element {
         <Col className='cvat-player-buttons'>
             <GlobalHotKeys keyMap={subKeyMap(componentShortcuts, keyMap)} handlers={handlers} />
             { (chapters.length > 0) && (
-                <CVATTooltip title='Chapters'>
-                    <Icon
-                        style={navIconStyle}
-                        className='cvat-player-chapter-menu-button'
-                        component={ChapterMenuIcon}
-                        onClick={openChapterMenu}
-                    />
-                </CVATTooltip>
+                <ChapterMenu
+                    chapters={chapters}
+                    activeChapter={activeChapter}
+                    onSelectChapter={onSelectChapter}
+                    onHoveredChapter={onHoveredChapter}
+                />
+
             )}
             <CVATTooltip title='Go to the first frame'>
                 <Icon

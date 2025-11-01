@@ -41,7 +41,7 @@ import { toClipboard } from 'utils/to-clipboard';
 import { Chapter } from 'cvat-core/src/frames';
 
 interface StateToProps {
-    chapters: Chapter[] | null;
+    chapters: Chapter[];
     jobInstance: Job;
     frameIsDeleted: boolean;
     frameNumber: number;
@@ -146,7 +146,7 @@ function mapStateToProps(state: CombinedState): StateToProps {
         );
     }
 
-    const chapters = meta?.chapters ?? null;
+    const chapters = meta?.chapters ?? [];
 
     return {
         chapters,
@@ -558,6 +558,21 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
         }
     };
 
+    private readonly selectChapter = (id: number): void => {
+        const {
+            frameNumber, chapters
+        } = this.props;
+        let selectedChapter: Chapter | null = null;
+        for (const chapter of chapters) {
+            if (chapter.id === id) {
+                selectedChapter = chapter;
+            }
+        }
+        if (selectedChapter !== null) {
+            changeFrameAsync(selectedChapter.start)
+        }
+    }
+
     private onChangePlayerSliderValue = async (value: number): Promise<void> => {
         const {
             playing, onSwitchPlay, jobInstance, showDeletedFrames,
@@ -710,6 +725,7 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
                 onLastFrame={this.onLastFrame}
                 onSearchAnnotations={this.searchAnnotations}
                 onSearchChapters={this.searchChapters}
+                onSelectChapter={this.onSelectChapter}
                 setNavigationType={setNavigationType}
                 onSliderChange={this.onChangePlayerSliderValue}
                 onInputChange={this.onChangePlayerInputValue}

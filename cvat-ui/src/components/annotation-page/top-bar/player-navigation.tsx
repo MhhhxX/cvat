@@ -34,6 +34,7 @@ interface Props {
     ranges: string;
     frameNumber: number;
     chapters: Chapter[] | null;
+    hoveredChapter: number | null;
     frameFilename: string;
     frameDeleted: boolean;
     deleteFrameShortcut: string;
@@ -82,6 +83,7 @@ function PlayerNavigation(props: Props): JSX.Element {
         startFrame,
         stopFrame,
         chapters,
+        hoveredChapter,
         playing,
         frameNumber,
         frameFilename,
@@ -160,7 +162,7 @@ function PlayerNavigation(props: Props): JSX.Element {
         opacity: 0.5,
     } : {};
 
-    const formatChapterMarks = (labelname: string) => {
+    const formatChapterMarks = (labelname: string, fontSize: string) => {
         if (labelname) {
             return {
                 style:
@@ -177,7 +179,8 @@ function PlayerNavigation(props: Props): JSX.Element {
 
     const marks: Record<number, { style: React.CSSProperties; label: React.ReactNode } | undefined> = {};
     for (const chapter of chapters ?? []) {
-        marks[chapter.start] = formatChapterMarks(chapter.metadata.title);
+        const fontSize = hoveredChapter === chapter.id ? 'small' : 'x-small';
+        marks[chapter.start] = formatChapterMarks(chapter.metadata.title, fontSize);
     }
 
     const deleteFrameIcon = !frameDeleted ? (
