@@ -146,13 +146,6 @@ export default function AnnotationTopBarComponent(props: Props): JSX.Element {
 
     const [hoveredChapter, setHoveredChapter] = useState<number | null>(null);
 
-    let activeChapter: number | null = null;
-    for (const chapter of chapters) {
-        if (chapter.start >= frameNumber && chapter.stop <= frameNumber) {
-            activeChapter = chapter.id;
-        }
-    }
-
     playerItems.push([(
         <PlayerButtons
             key='player_buttons'
@@ -164,7 +157,6 @@ export default function AnnotationTopBarComponent(props: Props): JSX.Element {
             backwardShortcut={backwardShortcut}
             navigationType={navigationType}
             chapters={chapters}
-            activeChapter={activeChapter}
             keyMap={keyMap}
             workspace={workspace}
             onPrevFrame={onPrevFrame}

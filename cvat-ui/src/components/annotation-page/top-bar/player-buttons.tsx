@@ -11,7 +11,7 @@ import CVATTooltip from 'components/common/cvat-tooltip';
 import GlobalHotKeys, { KeyMap } from 'utils/mousetrap-react';
 import { NavigationType, Workspace } from 'reducers';
 import {
-    BackJumpIcon, ChapterMenuIcon,
+    BackJumpIcon,
     FirstIcon,
     ForwardJumpIcon,
     LastIcon,
@@ -40,7 +40,6 @@ interface Props {
     forwardShortcut: string;
     backwardShortcut: string;
     chapters: Chapter[];
-    activeChapter: number | null;
     keyMap: KeyMap;
     workspace: Workspace;
     navigationType: NavigationType;
@@ -127,7 +126,6 @@ function PlayerButtons(props: Props): JSX.Element {
         backwardShortcut,
         keyMap,
         chapters,
-        activeChapter,
         navigationType,
         workspace,
         onSwitchPlay,
@@ -245,7 +243,6 @@ function PlayerButtons(props: Props): JSX.Element {
             { (chapters.length > 0) && (
                 <ChapterMenu
                     chapters={chapters}
-                    activeChapter={activeChapter}
                     onSelectChapter={onSelectChapter}
                     onHoveredChapter={onHoveredChapter}
                 />

@@ -94,7 +94,6 @@ interface DispatchToProps {
         frameFrom: number,
         frameTo: number,
     ): void;
-    selectChapter(id: number): void;
     setForceExitAnnotationFlag(forceExit: boolean): void;
     changeWorkspace(workspace: Workspace): void;
     onSwitchToolsBlockerState(toolsBlockerState: ToolsBlockerState): void;

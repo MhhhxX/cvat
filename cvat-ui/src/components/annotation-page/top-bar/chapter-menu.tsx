@@ -7,7 +7,6 @@ import { ChapterMenuIcon } from 'icons';
 
 interface Props {
     chapters: Chapter[];
-    activeChapter: number | null;
     onSelectChapter: (id: number) => void;
     onHoveredChapter?: (id: number | null) => void;
 }
@@ -15,42 +14,49 @@ interface Props {
 function ChapterMenu(props: Props): JSX.Element {
     const {
         chapters,
-        activeChapter,
         onSelectChapter,
         onHoveredChapter,
     } = props;
 
     const content = (
-        <List
-            size='small'
-            dataSource={chapters}
-            renderItem={(chapter: Chapter) => {
-                const isActive = chapter.id === activeChapter;
-                const itemClass = `chapter-item ${isActive ? 'active' : ''}`;
+        <div style={{ maxHeight: 300, overflowY: 'auto', overflowX: 'hidden' }}>
+            <List
+                className='cvat-player-chapter-menu-list'
+                size='small'
+                dataSource={chapters}
+                renderItem={(chapter: Chapter) => {
+                    const itemClass = 'cvat-player-chapter-menu-list-item';
 
-                return (
-                    <List.Item
-                        className={itemClass}
-                        key={chapter.id}
-                        onClick={() => onSelectChapter(chapter.id)}
-                        onMouseEnter={() => onHoveredChapter?.(chapter.id)}
-                        onMouseLeave={() => onHoveredChapter?.(null)}
-                    >
-                        <div>
-                            <strong>{chapter.metadata.title}</strong>
-                            <span style={{ color: '#aaa' }}>{chapter.id}</span>
+                    return (
+                        <List.Item
+                            className={itemClass}
+                            key={chapter.id}
+                            onClick={() => onSelectChapter(chapter.id)}
+                            onMouseEnter={() => onHoveredChapter?.(chapter.id)}
+                            onMouseLeave={() => onHoveredChapter?.(null)}
+                        >
                             <div>
-                                Frame
-                                {chapter.start}
-                                 -
-                                {chapter.stop}
+                                <strong>
+                                    <span style={{ color: '#aaa' }}>
+                                        {chapter.id}
+                                        {': '}
+                                    </span>
+                                    {chapter.metadata.title}
+                                </strong>
+                                <div>
+                                    Frames
+                                    {' '}
+                                    {chapter.start}
+                                    -
+                                    {chapter.stop}
+                                </div>
                             </div>
-                        </div>
-                    </List.Item>
+                        </List.Item>
 
-                );
-            }}
-        />
+                    );
+                }}
+            />
+        </div>
     );
 
     return (
@@ -59,6 +65,7 @@ function ChapterMenu(props: Props): JSX.Element {
             content={content}
             title='Chapters'
             placement='bottom'
+            className='cvat-player-chapter-menu'
         >
 
             <CvatTooltip title='Select chapter'>

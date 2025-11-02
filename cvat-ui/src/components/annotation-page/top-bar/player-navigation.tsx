@@ -162,25 +162,25 @@ function PlayerNavigation(props: Props): JSX.Element {
         opacity: 0.5,
     } : {};
 
-    const formatChapterMarks = (labelname: string, fontSize: string): { style: React.CSSProperties; label: React.ReactNode } => {
-        if (labelname) {
-            return {
-                style:
-                        { color: '#ff4136', fontSize },
-                label:
-                        <Tooltip title={`${labelname}`}>
-                            <span>
-                                |
-                            </span>
-                        </Tooltip>,
-            };
-        }
-    };
+    const formatChapterMarks = (
+        labelName: string,
+        active: boolean,
+    ): {
+        style: React.CSSProperties;
+        label: React.ReactNode;
+    } => ({
+        style: { marginTop: '-4px' },
+        label:
+                <Tooltip title={`${labelName}`}>
+                    <span className={`ant-slider-mark-chapter ${active ? 'active' : ''}`} />
+                </Tooltip>,
+
+    });
 
     const marks: Record<number, { style: React.CSSProperties; label: React.ReactNode } | undefined> = {};
     for (const chapter of chapters ?? []) {
-        const fontSize = hoveredChapter === chapter.id ? 'small' : 'x-small';
-        marks[chapter.start] = formatChapterMarks(chapter.metadata.title, fontSize);
+        const active = hoveredChapter === chapter.id;
+        marks[chapter.start] = formatChapterMarks(chapter.metadata.title, active);
     }
 
     const deleteFrameIcon = !frameDeleted ? (
